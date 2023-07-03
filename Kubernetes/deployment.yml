@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiii-springboot-configmap
+  namespace: kiii-project
+data:
+  application.properties: |
+    server.port=8080
+    spring.datasource.url=jdbc:postgresql://db:5432/kiii
+    spring.datasource.username=postgres
+    spring.datasource.password=anastasija
+    spring.datasource.hikari.connectionTimeout=20000
+    spring.datasource.hikari.maximumPoolSize=5
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+    spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+    spring.jpa.show-sql=true
+    spring.jpa.generate-ddl=true
+    spring.jpa.hibernate.ddl-auto=create
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiii-springboot-deployment
+  namespace: kiii-project
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kiii-springboot-pod
+  template:
+    metadata:
+      labels:
+        app: kiii-springboot-pod
+    spec:
+      containers:
+        - name: kiii-springboot
+          resources:
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
+          image: aslavkovskaa/kiii-project:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: kiii-springboot-configmap-volume
+              mountPath: /app/config/application.properties
+      volumes:
+        - name: kiii-springboot-configmap-volume
+          configMap:
+            name: kiii-springboot-configmap
